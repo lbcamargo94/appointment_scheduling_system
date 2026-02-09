@@ -1,15 +1,23 @@
 import prisma from "../../config/database.js";
-import { hashPassword, comparePassword } from "../../utils/helpers/hash.helper.js";
+import * as userRepository from "../users/users.repository.js";
+import {
+  hashPassword,
+  comparePassword,
+} from "../../utils/helpers/hash.helper.js";
 import { generateToken } from "../../utils/helpers/jwt.helper.js";
-import type { RegisterInput, LoginInput, AuthResponse } from "./types/auth.types.js";
+import type {
+  RegisterInput,
+  LoginInput,
+  AuthResponse,
+} from "./types/auth.types.js";
 
 export async function register(data: RegisterInput): Promise<AuthResponse> {
-  const existingUser = await prisma.user.findUnique({
-    where: { email: data.email },
-  });
+  const existingUser = await userRepository.findByEmail(data.email);
 
   if (existingUser) {
-    const error = new Error("Email já está em uso") as Error & { statusCode: number };
+    const error = new Error("Email já está em uso") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 409;
     throw error;
   }
@@ -28,18 +36,13 @@ export async function register(data: RegisterInput): Promise<AuthResponse> {
 
     if (data.role === "DOCTOR" && data.specialty) {
       await tx.doctor.create({
-        data: {
-          specialty: data.specialty,
-          userId: createdUser.id,
-        },
+        data: { specialty: data.specialty, userId: createdUser.id },
       });
     }
 
     if (data.role === "PATIENT") {
       await tx.patient.create({
-        data: {
-          userId: createdUser.id,
-        },
+        data: { userId: createdUser.id },
       });
     }
 
@@ -49,23 +52,18 @@ export async function register(data: RegisterInput): Promise<AuthResponse> {
   const token = generateToken({ userId: user.id, role: user.role });
 
   return {
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    user: { id: user.id, name: user.name, email: user.email, role: user.role },
     token,
   };
 }
 
 export async function login(data: LoginInput): Promise<AuthResponse> {
-  const user = await prisma.user.findUnique({
-    where: { email: data.email },
-  });
+  const user = await userRepository.findByEmail(data.email);
 
   if (!user) {
-    const error = new Error("Credenciais inválidas") as Error & { statusCode: number };
+    const error = new Error("Credenciais inválidas") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 401;
     throw error;
   }
@@ -73,7 +71,9 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
   const isPasswordValid = await comparePassword(data.password, user.password);
 
   if (!isPasswordValid) {
-    const error = new Error("Credenciais inválidas") as Error & { statusCode: number };
+    const error = new Error("Credenciais inválidas") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 401;
     throw error;
   }
@@ -81,12 +81,7 @@ export async function login(data: LoginInput): Promise<AuthResponse> {
   const token = generateToken({ userId: user.id, role: user.role });
 
   return {
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
+    user: { id: user.id, name: user.name, email: user.email, role: user.role },
     token,
   };
 }

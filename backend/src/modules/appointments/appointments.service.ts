@@ -1,4 +1,6 @@
-import prisma from "../../config/database.js";
+import * as appointmentRepository from "./appointments.repository.js";
+import * as doctorRepository from "../doctors/doctors.repository.js";
+import * as patientRepository from "../patients/patients.repository.js";
 
 interface CreateAppointmentInput {
   date: string;
@@ -12,9 +14,7 @@ interface UpdateStatusInput {
 }
 
 export async function create(data: CreateAppointmentInput) {
-  const doctor = await prisma.doctor.findUnique({
-    where: { id: data.doctorId },
-  });
+  const doctor = await doctorRepository.findByIdSimple(data.doctorId);
   if (!doctor) {
     const error = new Error("Médico não encontrado") as Error & {
       statusCode: number;
@@ -23,9 +23,7 @@ export async function create(data: CreateAppointmentInput) {
     throw error;
   }
 
-  const patient = await prisma.patient.findUnique({
-    where: { id: data.patientId },
-  });
+  const patient = await patientRepository.findByIdSimple(data.patientId);
   if (!patient) {
     const error = new Error("Paciente não encontrado") as Error & {
       statusCode: number;
@@ -34,38 +32,20 @@ export async function create(data: CreateAppointmentInput) {
     throw error;
   }
 
-  return prisma.appointment.create({
-    data: {
-      date: new Date(data.date),
-      reason: data.reason,
-      doctorId: data.doctorId,
-      patientId: data.patientId,
-    },
-    include: {
-      doctor: { include: { user: { select: { name: true } } } },
-      patient: { include: { user: { select: { name: true } } } },
-    },
+  return appointmentRepository.create({
+    date: new Date(data.date),
+    reason: data.reason,
+    doctorId: data.doctorId,
+    patientId: data.patientId,
   });
 }
 
 export async function findAll() {
-  return prisma.appointment.findMany({
-    include: {
-      doctor: { include: { user: { select: { name: true } } } },
-      patient: { include: { user: { select: { name: true } } } },
-    },
-    orderBy: { date: "asc" },
-  });
+  return appointmentRepository.findAll();
 }
 
 export async function findById(id: string) {
-  const appointment = await prisma.appointment.findUnique({
-    where: { id },
-    include: {
-      doctor: { include: { user: { select: { name: true } } } },
-      patient: { include: { user: { select: { name: true } } } },
-    },
-  });
+  const appointment = await appointmentRepository.findById(id);
 
   if (!appointment) {
     const error = new Error("Agendamento não encontrado") as Error & {
@@ -79,7 +59,7 @@ export async function findById(id: string) {
 }
 
 export async function updateStatus(id: string, data: UpdateStatusInput) {
-  const appointment = await prisma.appointment.findUnique({ where: { id } });
+  const appointment = await appointmentRepository.findByIdSimple(id);
 
   if (!appointment) {
     const error = new Error("Agendamento não encontrado") as Error & {
@@ -97,18 +77,11 @@ export async function updateStatus(id: string, data: UpdateStatusInput) {
     throw error;
   }
 
-  return prisma.appointment.update({
-    where: { id },
-    data: { status: data.status },
-    include: {
-      doctor: { include: { user: { select: { name: true } } } },
-      patient: { include: { user: { select: { name: true } } } },
-    },
-  });
+  return appointmentRepository.updateStatus(id, data.status);
 }
 
 export async function remove(id: string) {
-  const appointment = await prisma.appointment.findUnique({ where: { id } });
+  const appointment = await appointmentRepository.findByIdSimple(id);
 
   if (!appointment) {
     const error = new Error("Agendamento não encontrado") as Error & {
@@ -118,5 +91,5 @@ export async function remove(id: string) {
     throw error;
   }
 
-  await prisma.appointment.delete({ where: { id } });
+  await appointmentRepository.remove(id);
 }

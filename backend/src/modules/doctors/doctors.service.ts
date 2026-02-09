@@ -1,19 +1,16 @@
-import prisma from "../../config/database.js";
+import * as doctorRepository from "./doctors.repository.js";
 
 export async function findAll() {
-  return prisma.doctor.findMany({
-    include: { user: { select: { id: true, name: true, email: true, role: true } } },
-  });
+  return doctorRepository.findAll();
 }
 
 export async function findById(id: string) {
-  const doctor = await prisma.doctor.findUnique({
-    where: { id },
-    include: { user: { select: { id: true, name: true, email: true, role: true } } },
-  });
+  const doctor = await doctorRepository.findById(id);
 
   if (!doctor) {
-    const error = new Error("Médico não encontrado") as Error & { statusCode: number };
+    const error = new Error("Médico não encontrado") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 404;
     throw error;
   }
@@ -21,39 +18,36 @@ export async function findById(id: string) {
   return doctor;
 }
 
-export async function update(id: string, data: { specialty?: string; name?: string }) {
-  const doctor = await prisma.doctor.findUnique({ where: { id } });
+export async function update(
+  id: string,
+  data: { specialty?: string; name?: string },
+) {
+  const doctor = await doctorRepository.findByIdSimple(id);
 
   if (!doctor) {
-    const error = new Error("Médico não encontrado") as Error & { statusCode: number };
+    const error = new Error("Médico não encontrado") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 404;
     throw error;
   }
 
-  return prisma.$transaction(async (tx) => {
-    if (data.name) {
-      await tx.user.update({ where: { id: doctor.userId }, data: { name: data.name } });
-    }
+  const doctorData = data.specialty ? { specialty: data.specialty } : {};
+  const userData = data.name ? { name: data.name } : undefined;
 
-    return tx.doctor.update({
-      where: { id },
-      data: { ...(data.specialty && { specialty: data.specialty }) },
-      include: { user: { select: { id: true, name: true, email: true, role: true } } },
-    });
-  });
+  return doctorRepository.update(id, doctorData, userData);
 }
 
 export async function remove(id: string) {
-  const doctor = await prisma.doctor.findUnique({ where: { id } });
+  const doctor = await doctorRepository.findByIdSimple(id);
 
   if (!doctor) {
-    const error = new Error("Médico não encontrado") as Error & { statusCode: number };
+    const error = new Error("Médico não encontrado") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 404;
     throw error;
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.doctor.delete({ where: { id } });
-    await tx.user.delete({ where: { id: doctor.userId } });
-  });
+  await doctorRepository.remove(id, doctor.userId);
 }

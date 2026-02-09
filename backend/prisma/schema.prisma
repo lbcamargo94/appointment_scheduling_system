@@ -26,13 +26,14 @@ enum AppointmentStatus {
 }
 
 model User {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   name      String
-  email     String   @unique
+  email     String    @unique
   password  String
   role      UserRole
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   doctor  Doctor?
   patient Patient?
@@ -41,10 +42,11 @@ model User {
 }
 
 model Doctor {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   specialty String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
@@ -55,9 +57,10 @@ model Doctor {
 }
 
 model Patient {
-  id        String   @id @default(uuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String    @id @default(uuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
@@ -74,6 +77,7 @@ model Appointment {
   status    AppointmentStatus @default(SCHEDULED)
   createdAt DateTime          @default(now())
   updatedAt DateTime          @updatedAt
+  deletedAt DateTime?
 
   doctorId  String
   patientId String

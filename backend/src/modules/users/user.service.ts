@@ -1,19 +1,16 @@
-import prisma from "../../config/database.js";
+import * as userRepository from "./users.repository.js";
 
 export async function findAll() {
-  return prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, createdAt: true, updatedAt: true },
-  });
+  return userRepository.findAll();
 }
 
 export async function findById(id: string) {
-  const user = await prisma.user.findUnique({
-    where: { id },
-    select: { id: true, name: true, email: true, role: true, createdAt: true, updatedAt: true },
-  });
+  const user = await userRepository.findById(id);
 
   if (!user) {
-    const error = new Error("Usuário não encontrado") as Error & { statusCode: number };
+    const error = new Error("Usuário não encontrado") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 404;
     throw error;
   }
@@ -22,21 +19,15 @@ export async function findById(id: string) {
 }
 
 export async function remove(id: string) {
-  const user = await prisma.user.findUnique({ where: { id } });
+  const user = await userRepository.findById(id);
 
   if (!user) {
-    const error = new Error("Usuário não encontrado") as Error & { statusCode: number };
+    const error = new Error("Usuário não encontrado") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 404;
     throw error;
   }
 
-  await prisma.$transaction(async (tx) => {
-    if (user.role === "DOCTOR") {
-      await tx.doctor.deleteMany({ where: { userId: id } });
-    }
-    if (user.role === "PATIENT") {
-      await tx.patient.deleteMany({ where: { userId: id } });
-    }
-    await tx.user.delete({ where: { id } });
-  });
+  await userRepository.removeWithRelations(id, user.role);
 }

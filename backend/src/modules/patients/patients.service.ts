@@ -1,19 +1,16 @@
-import prisma from "../../config/database.js";
+import * as patientRepository from "./patients.repository.js";
 
 export async function findAll() {
-  return prisma.patient.findMany({
-    include: { user: { select: { id: true, name: true, email: true, role: true } } },
-  });
+  return patientRepository.findAll();
 }
 
 export async function findById(id: string) {
-  const patient = await prisma.patient.findUnique({
-    where: { id },
-    include: { user: { select: { id: true, name: true, email: true, role: true } } },
-  });
+  const patient = await patientRepository.findById(id);
 
   if (!patient) {
-    const error = new Error("Paciente não encontrado") as Error & { statusCode: number };
+    const error = new Error("Paciente não encontrado") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 404;
     throw error;
   }
@@ -22,35 +19,33 @@ export async function findById(id: string) {
 }
 
 export async function update(id: string, data: { name?: string }) {
-  const patient = await prisma.patient.findUnique({ where: { id } });
+  const patient = await patientRepository.findByIdSimple(id);
 
   if (!patient) {
-    const error = new Error("Paciente não encontrado") as Error & { statusCode: number };
+    const error = new Error("Paciente não encontrado") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 404;
     throw error;
   }
 
   if (data.name) {
-    await prisma.user.update({ where: { id: patient.userId }, data: { name: data.name } });
+    return patientRepository.updateUserName(patient.userId, data.name);
   }
 
-  return prisma.patient.findUnique({
-    where: { id },
-    include: { user: { select: { id: true, name: true, email: true, role: true } } },
-  });
+  return patientRepository.findById(id);
 }
 
 export async function remove(id: string) {
-  const patient = await prisma.patient.findUnique({ where: { id } });
+  const patient = await patientRepository.findByIdSimple(id);
 
   if (!patient) {
-    const error = new Error("Paciente não encontrado") as Error & { statusCode: number };
+    const error = new Error("Paciente não encontrado") as Error & {
+      statusCode: number;
+    };
     error.statusCode = 404;
     throw error;
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.patient.delete({ where: { id } });
-    await tx.user.delete({ where: { id: patient.userId } });
-  });
+  await patientRepository.remove(id, patient.userId);
 }
