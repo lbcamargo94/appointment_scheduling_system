@@ -6,14 +6,20 @@ export const registerSchema = z
     email: z.string().email("Email inválido"),
     password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
     role: z.enum(["ADMIN", "RECEPTIONIST", "DOCTOR", "PATIENT"]),
-    specialty: z.string().min(2, "Especialidade deve ter pelo menos 2 caracteres").optional(),
+    specialties: z
+      .array(z.string().min(2, "Cada especialidade deve ter pelo menos 2 caracteres"))
+      .min(1, "Pelo menos uma especialidade é obrigatória")
+      .optional(),
   })
   .refine(
     (data) => {
-      if (data.role === "DOCTOR") return !!data.specialty;
+      if (data.role === "DOCTOR") return !!data.specialties && data.specialties.length > 0;
       return true;
     },
-    { message: "Especialidade é obrigatória para médicos", path: ["specialty"] },
+    {
+      message: "Especialidades são obrigatórias para médicos",
+      path: ["specialties"],
+    },
   );
 
 export type RegisterDto = z.infer<typeof registerSchema>;

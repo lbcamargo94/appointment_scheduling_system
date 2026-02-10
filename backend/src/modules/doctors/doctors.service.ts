@@ -20,7 +20,7 @@ export async function findById(id: string) {
 
 export async function update(
   id: string,
-  data: { specialty?: string; name?: string },
+  data: { specialties?: string[]; name?: string },
 ) {
   const doctor = await doctorRepository.findByIdSimple(id);
 
@@ -32,7 +32,7 @@ export async function update(
     throw error;
   }
 
-  const doctorData = data.specialty ? { specialty: data.specialty } : {};
+  const doctorData = data.specialties ? { specialties: data.specialties } : {};
   const userData = data.name ? { name: data.name } : undefined;
 
   return doctorRepository.update(id, doctorData, userData);

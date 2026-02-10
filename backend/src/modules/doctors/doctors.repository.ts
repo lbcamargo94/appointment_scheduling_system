@@ -18,13 +18,13 @@ export async function findByIdSimple(id: string) {
   return prisma.doctor.findUnique({ where: { id, ...notDeleted } });
 }
 
-export async function create(data: { specialty: string; userId: string }) {
+export async function create(data: { specialties: string[]; userId: string }) {
   return prisma.doctor.create({ data });
 }
 
 export async function update(
   id: string,
-  doctorData: { specialty?: string },
+  doctorData: { specialties?: string[] },
   userData?: { name?: string },
 ) {
   return prisma.$transaction(async (tx) => {

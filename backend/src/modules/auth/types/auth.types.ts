@@ -15,7 +15,7 @@ export interface RegisterInput {
   email: string;
   password: string;
   role: UserRole;
-  specialty?: string;
+  specialties?: string[];
 }
 
 export interface LoginInput {

@@ -34,9 +34,9 @@ export async function register(data: RegisterInput): Promise<AuthResponse> {
       },
     });
 
-    if (data.role === "DOCTOR" && data.specialty) {
+    if (data.role === "DOCTOR" && data.specialties) {
       await tx.doctor.create({
-        data: { specialty: data.specialty, userId: createdUser.id },
+        data: { specialties: data.specialties, userId: createdUser.id },
       });
     }
 

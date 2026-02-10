@@ -17,7 +17,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx src/database/seeds/index.ts",
     "db:studio": "prisma studio",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write \"src/**/*.ts\""
